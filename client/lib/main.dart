@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_upload_guide/main_view_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,42 +32,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final dio = Dio();
-  var isLoading = false;
-
-  Future<bool> _uploadImage() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final bytes = await rootBundle.load('assets/group10.png');
-
-    final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(bytes.buffer.asUint8List(),
-          filename: 'group10.png'),
-    });
-
-    try {
-      final response = await dio.post(
-        'http://10.0.2.2:8080/upload',
-        data: formData,
-      );
-
-      setState(() {
-        isLoading = false;
-      });
-
-      return true;
-    } catch (e) {
-      print(e.toString());
-
-      setState(() {
-        isLoading = false;
-      });
-
-      return false;
-    }
-  }
+  final viewModel = MainViewModel();
 
   @override
   Widget build(BuildContext context) {
@@ -77,9 +43,20 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           children: [
-            isLoading ? const CircularProgressIndicator() : Container(),
+            viewModel.isLoading ? const CircularProgressIndicator() : Container(),
             ElevatedButton(
-              onPressed: _uploadImage,
+              onPressed: () async {
+                setState(() {
+                  viewModel.isLoading = true;
+                });
+
+                final bytes = await rootBundle.load('assets/group10.png');
+                await viewModel.uploadImage(bytes.buffer.asUint8List());
+
+                setState(() {
+                  viewModel.isLoading = false;
+                });
+              },
               child: const Text('업로드 파일'),
             ),
           ],
